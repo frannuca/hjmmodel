@@ -110,7 +110,7 @@ class HJMFramework:
         for i, (t, f) in enumerate(self.__run_forward_dynamics(proj_time,mc_tenors,mc_vols,mc_drift,mc_forward_curve)):
             proj_rates.append(f)
         
-        columns = [str(int(tn*360)) for tn in mc_tenors]
+        columns = [str(tn) for tn in mc_tenors]
         proj_rates = pd.DataFrame(np.matrix(proj_rates),index=proj_time,columns=columns)
         return proj_rates
         
