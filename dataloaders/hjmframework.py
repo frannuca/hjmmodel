@@ -5,7 +5,8 @@ import matplotlib.pyplot as plt
 import scipy.integrate as integrate
 import scipy.special as special
 import copy as copylib
-from .tools import tenor2years,LoadForwardCurves
+from scipy.interpolate import griddata
+from .tools import *
 
 class HJMFramework:
 
@@ -95,12 +96,12 @@ class HJMFramework:
     def set_montecarlo_parameters(self,seed,timesteps,t_end_years,ntenors):
         np.random.seed(seed)
         self.mc_tenors,self.mc_vols,self.mc_drift,self.mc_forward_curve =  self.__compute_mc_vols_and_drift(ntenors)        
-        self.proj_time = np.linspace(0,t_end_years,timesteps).flatten()
+        self.mc_time = np.linspace(0,t_end_years,timesteps).flatten()
         
         
     def run_montecarlo_path(self):
         proj_rates = []
-        proj_time = self.proj_time
+        proj_time = self.mc_time
         mc_tenors = self.mc_tenors
         mc_drift = self.mc_drift
         mc_vols = self.mc_vols
@@ -113,4 +114,6 @@ class HJMFramework:
         columns = [str(tn) for tn in mc_tenors]
         proj_rates = pd.DataFrame(np.matrix(proj_rates),index=proj_time,columns=columns)
         return proj_rates
-        
+
+     
+  
