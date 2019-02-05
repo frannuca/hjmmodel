@@ -14,7 +14,7 @@ class IDWInterpolator:
         self.cube=cube
         
         self.Nvar = cube.shape[1]-1
-        self.points = np.matrix(cube[:,0:self.Nvar])
+        self.points = np.matrix(cube[:,0:self.Nvar])#matrix cube with data samples
         self.fx = np.array(cube[:,-1]).flatten()
         
     def interpolateclosestpoints(self,x,n):
