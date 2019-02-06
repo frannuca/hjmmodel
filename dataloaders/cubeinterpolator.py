@@ -38,7 +38,7 @@ class IDWInterpolator:
         
 
 if __name__  =="__main__":
-    data = pd.read_csv("C:\\Users\\venus\\code\\github\\hjmmodel\\dataloaders\\points.csv")
+    data = pd.read_csv("E:\\software\\hjmmodel\\dataloaders\\points.csv")
     I = IDWInterpolator(data.values)
     
     #0.001589792	0.062131019		0.010497276	0.105548818

@@ -6,7 +6,8 @@ import scipy.integrate as integrate
 import scipy.special as special
 import copy as copylib
 from scipy.interpolate import griddata
-from .tools import *
+from  .tools import *
+import scipy.integrate as integrate
 
 class HJMFramework:
 
@@ -107,7 +108,6 @@ class HJMFramework:
         mc_vols = self.mc_vols
         mc_forward_curve = self.mc_forward_curve
 
-        
         for i, (t, f) in enumerate(self.__run_forward_dynamics(proj_time,mc_tenors,mc_vols,mc_drift,mc_forward_curve)):
             proj_rates.append(f)
         
@@ -116,4 +116,8 @@ class HJMFramework:
         return proj_rates
 
      
-  
+    def integrateforward(self,cube,t,TenorinYears):
+        iforward = ForwardInterpolator(self.mc_time,self.mc_tenors,cube.as_matrix())
+        ivals = lambda T: iforward.forward(t,T)
+        integralval,_ = integrate.quadpack.quad(ivals,0,TenorinYears)
+        return integralval

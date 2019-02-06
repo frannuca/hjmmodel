@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import copy as copylib
-from  dataloaders import hjmframework
+from dataloaders import hjmframework
 from dataloaders import tools
 from dataloaders import arr
 
@@ -15,69 +15,64 @@ hjmmodel.set_montecarlo_parameters(seed = 42,timesteps = 120, t_end_years = 1,nt
 
 
 path = []
-nt = 11
+
 dt = hjmmodel.mc_time[1] - hjmmodel.mc_time[0]
-T12 = int(1.0/dt)
-T3 = int(0.25/dt)
-T6 = int(0.5/dt)
+T12 = 1.0
+T3 = 3.0/12.0
+T6 = 0.5
 L12m = []
 L3m = []
 L6m = []
 volumes = []
-for n in range(1,300):
+t=0.9
+Nbins = 50
+Nsims = 5000
+for n in range(1,Nsims):
     print(n)
     cube = hjmmodel.run_montecarlo_path()
      
-    iforward = tools.ForwardInterpolator(hjmmodel.mc_time,hjmmodel.mc_tenors,cube.as_matrix())
-   
-    def ff(t,T):
-        ivals = lambda Tx: iforward.forward(t,Tx)
-        ee,_ = integrate.quadpack.quad(ivals,0,T)
-        x = (np.exp(ee)-1.0)/T
-        return x
+    iforward = tools.ForwardInterpolator(hjmmodel.mc_time,hjmmodel.mc_tenors,cube.as_matrix())       
+    
+    
+    
+    rate = hjmmodel.integrateforward(cube,t,T3)
+    L3m.append((np.exp(rate)-1.0)/T3)
+    
+    rate = hjmmodel.integrateforward(cube,t,T6)
+    L6m.append((np.exp(rate)-1.0)/T6)
+    
+    rate = hjmmodel.integrateforward(cube,t,T12)
+    L12m.append((np.exp(rate)-1.0)/T12)
 
-    oarr = arr.ARRCalculator([1,3,6],[0.40,0.2,0.2],500e6)   
+    path.append([L3m[-1],L6m[-1],L12m[-1]])   
 
-    frame = oarr.computeARR(12,ff,[0 for _ in range(12)])
-    #frame.to_csv("C:/Users/venus/temp/NII.csv")
-    volumes.append(frame.sum(axis=1).values/1e6)
-    
-    t=0.25
-    
-    ivals = lambda T: iforward.forward(t,T)
-    ee12,_ = integrate.quadpack.quad(ivals,0,1.0)
-    L12m.append((np.exp(ee12)-1.0))
-    ee3m,_ = integrate.quadpack.quad(ivals,0,0.25)
-    L3m.append((np.exp(ee3m)-1.0)/0.25)
-    ee6m,_ = integrate.quadpack.quad(ivals,0,0.5)
-    L6m.append((np.exp(ee6m)-1.0)/0.5)
-    
-    x=np.array(cube.iloc[nt,:]).flatten()     
-    path.append(x)
-    # if n%1000 == 0:
-    #     plt.plot(hjmmodel.mc_tenors, np.array(np.mean(np.matrix(path),axis=0)).flatten(),label=str(n))
-    
+path =np.matrix(path)
+spreads = (path - np.mean(path,axis=0))*100.0
+L3m = np.sort(spreads[:,0])
+L6m = np.sort(spreads[:,1])
+L12m = np.sort(spreads[:,2])
 
-abins = np.linspace(np.min(L12m),np.max(L12m),10)
+print("L3m@99={}".format(L3m[int(0.99*Nsims)]))
+print("L6m@99={}".format(L6m[int(0.99*Nsims)]))
+print("L12m@99={}".format(L12m[int(0.99*Nsims)]))
+abins = np.linspace(np.min(L12m),np.max(L12m),Nbins)
 plt.hist(L12m,bins=np.array(abins))
+plt.title('L12')
 plt.figure()
 
-abins = np.linspace(np.min(L3m),np.max(L3m),10)
+abins = np.linspace(np.min(L3m),np.max(L3m),Nbins)
 plt.hist(L3m,bins=np.array(abins))
+plt.title('L3')
 plt.figure()
-abins = np.linspace(np.min(L6m),np.max(L6m),10)
+
+abins = np.linspace(np.min(L6m),np.max(L6m),Nbins)
 plt.hist(L6m,bins=np.array(abins))
+plt.title('L6')
 
 plt.figure()
-plt.plot(np.matrix(volumes).transpose())
+plt.plot([3,6,12],spreads.transpose())
 
-
-plt.figure()
-
-dV = np.array(np.sum(np.matrix(volumes),axis=1)).flatten()
-print(dV)
-abins = np.linspace(np.min(dV),np.max(dV),20)
-plt.hist(dV,bins=np.array(abins))
+#plt.plot([3,6,12],np.mean(np.matrix(path),axis=0).transpose()*100.0,linewidth='5',color='k')
 
 plt.show()
 
